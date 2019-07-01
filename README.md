@@ -8,5 +8,5 @@ O projeto se baseia em um aplicativo de controle de estufa. O arduino ESP8266 fi
 
 ## Autores
 
-* Rodrigo Hilkner - RA 157198
 * Filipe Marques - RA 148524
+* Rodrigo Hilkner - RA 157198
