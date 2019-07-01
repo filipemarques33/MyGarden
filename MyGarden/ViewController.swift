@@ -14,29 +14,17 @@ class ViewController: UIViewController {
         return .lightContent
     }
     
+    @IBOutlet weak var lastUpdatedLabel: UILabel!
     @IBOutlet weak var tempLabel: UILabel!
     @IBOutlet weak var lumLabel: UILabel!
     @IBOutlet weak var humLabel: UILabel!
+    @IBOutlet weak var tableView: UITableView!
     
+    var firebaseService: FirebaseService? = nil
     var temperature = 18
     var luminosity = 730
     var humidity = 38
-    
-    @IBAction func update(_ sender: Any) {
-        temperature += 1
-        luminosity += 50
-        humidity += 7
-        updateCards()
-    }
-    
-    @IBAction func reset(_ sender: Any) {
-        temperature = 18
-        luminosity = 730
-        humidity = 38
-        updateCards()
-    }
-    
-    @IBOutlet weak var tableView: UITableView!
+    var lastUpdatedDate = "18/03/2019 16:20:00"
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -44,20 +32,37 @@ class ViewController: UIViewController {
         
         self.tableView.delegate = self
         self.tableView.dataSource = self
+        
+        self.firebaseService = FirebaseService()
+        self.firebaseService!.fetchData(completionHandler: {
+            [weak self] (fetchedData) in
+            guard fetchedData != nil else {
+                print("Fetched data returned nil")
+                return
+            }
+            self?.temperature = fetchedData!.temperature
+            self?.luminosity = fetchedData!.luminosity
+            self?.humidity = fetchedData!.humidity
+            self?.lastUpdatedDate = fetchedData!.dateString
+            print(self?.lastUpdatedDate)
+            self?.updateCards()
+        })
+        
         updateCards()
     }
     
     func updateCards() {
-        self.tempLabel.text = "\(temperature)º C"
-        self.lumLabel.text = "\(luminosity) lm"
-        self.humLabel.text = "\(humidity)%"
+        self.tempLabel.text = "\(self.temperature)º C"
+        self.lumLabel.text = "\(self.luminosity) lm"
+        self.humLabel.text = "\(self.humidity)%"
+        self.lastUpdatedLabel.text = "Última atualização: " + self.lastUpdatedDate
         self.tableView.reloadData()
     }
     
     func setStatus(of crop:Crop) -> Int {
-        var tempStatus:Int = 0
-        var humStatus:Int = 0
-        var lumStatus:Int = 0
+        var tempStatus: Int = 0
+        var humStatus: Int = 0
+        var lumStatus: Int = 0
         
         if temperature <= crop.tempRangeStart-1 || temperature >= crop.tempRangeEnd+1 {
             tempStatus = 2
@@ -67,17 +72,17 @@ class ViewController: UIViewController {
             tempStatus = 1
         }
         
-        if humidity <= crop.humRangeStart-10 || humidity >= crop.humRangeEnd+10 {
+        if humidity <= crop.humRangeStart-5 || humidity >= crop.humRangeEnd+5 {
             humStatus = 2
-        } else if humidity >= crop.humRangeStart+10 && humidity <= crop.humRangeEnd-10 {
+        } else if humidity >= crop.humRangeStart+5 && humidity <= crop.humRangeEnd-5 {
             humStatus = 0
         } else {
             humStatus = 1
         }
         
-        if luminosity <= crop.lumRangeStart-70 || luminosity >= crop.lumRangeEnd+70 {
+        if luminosity <= crop.lumRangeStart-50 || luminosity >= crop.lumRangeEnd+50 {
             lumStatus = 2
-        } else if luminosity >= crop.lumRangeStart+70 && luminosity <= crop.lumRangeEnd-70 {
+        } else if luminosity >= crop.lumRangeStart+50 && luminosity <= crop.lumRangeEnd-50 {
             lumStatus = 0
         } else {
             lumStatus = 1
@@ -113,7 +118,7 @@ extension ViewController:UITableViewDelegate {
     }
 }
 
-extension ViewController:UITableViewDataSource {
+extension ViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return MockupData.crops.count
     }
